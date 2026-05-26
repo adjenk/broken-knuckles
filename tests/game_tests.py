@@ -1,6 +1,6 @@
 import unittest
 #import sys
-from cStringIO import StringIO
+from io import StringIO
 
 import game
 import betting
@@ -37,57 +37,64 @@ class TestDefaultGame(unittest.TestCase):
 
     def test_default_game_init(self):
         # maybe we don't really want to verify this ...
-        # maybe better to setup the game expliticly
+        # maybe better to setup the game explicitly
         # and allow the default params to change. hrm.
-        self.assert_(self.game.debug)
-        self.assert_(self.game.allowed_splits is None)
-        self.assert_(self.game.can_double_after_split)
-        self.assert_(self.game.num_decks == 1)
-        self.assert_(self.game.penetration == .75)
-        self.assert_(self.game.dealer_hit_on_soft_17 == False)
-        self.assert_(self.game.blackjack_pays == 1.5)
-        self.assert_(self.game.count_off_list == [0])
-        self.assert_(self.game.one_card_after_split_aces)
-        self.assert_(self.game.num_other_players == 0)
+
+        self.assertTrue(self.game.debug)
+        self.assertIsNone(self.game.allowed_splits)
+        self.assertTrue(self.game.can_double_after_split)
+        self.assertEqual(self.game.num_decks, 1)
+        self.assertEqual(self.game.penetration, 0.75)
+        self.assertFalse(self.game.dealer_hit_on_soft_17)
+        self.assertEqual(self.game.blackjack_pays, 1.5)
+        self.assertEqual(self.game.count_off_list, [0])
+        self.assertTrue(self.game.one_card_after_split_aces)
+        self.assertEqual(self.game.num_other_players, 0)
+
         # get_bet just returns 1
         # stuff that tracks the action over hands
-        self.assert_(self.game.player_money == 0)
-        self.assert_(self.game.money_trail == [])
-        self.assert_(self.game.bets == [])
-        self.assert_(self.game.hands == [])
+        self.assertEqual(self.game.player_money, 0)
+        self.assertEqual(self.game.money_trail, [])
+        self.assertEqual(self.game.bets, [])
+        self.assertEqual(self.game.hands, [])
+
         # for splits
-        self.assert_(self.game.deferred == [])
+        self.assertEqual(self.game.deferred, [])
 
     def test_deal(self):
         self.game.deal()
-        self.assert_(self.game.other_players == [])
+        self.assertEqual(self.game.other_players, [])
         self.assertEqual(self.game.dealer_hand, [1, 2])
-        self.assertEqual(self.game.player_hand,  [8, 3])
+        self.assertEqual(self.game.player_hand, [8, 3])
         self.assertEqual(self.game.count, 0)
 
     def test_get_card(self):
         self.game.get_card()
         self.assertEqual(self.game.count, 0)
+
         self.game.get_card()
         self.assertEqual(self.game.count, -1)
+
         self.game.get_card()
         self.game.get_card()
         self.assertEqual(self.game.count, 1)
+
+        # Test reshuffling when shoe is empty
         self.game.shoe = []
         card = self.game.get_card()
         self.game.shoe.append(card)
         self.assertEqual(card, self.game.get_card())
 
     def test_true_count(self):
-        [self.game.get_card() for i in range(4)]
+        # draw 4 cards
+        for _ in range(4):
+            self.game.get_card()
+
         self.assertEqual(self.game.count, 1.0)
+
         left = len(self.game.shoe)
-        true_count = 1.0 / (left / 52.)
-        #print true_count
-        #print self.game.count
-        #print len(self.game.shoe)
-        #print 52.
-        #true_count = 1.0 / len(self.game.shoe) / 52
+        true_count = 1.0 / (left / 52.0)
+
         self.assertEqual(self.game.true_count, true_count)
 
     def test_perceived_true_count(self):
@@ -145,13 +152,18 @@ class TestDefaultGame(unittest.TestCase):
         length = len(self.game.shoe)
         top_ten = self.game.shoe[-10:]
 
+         # Should NOT shuffle yet
         self.game.shuffle_if_penetration_exceeded()
         self.assertEqual(length, len(self.game.shoe))
         self.assertEqual(top_ten, self.game.shoe[-10:])
+
+        # Force penetration to be exceeded
         self.game.shoe = [10, 8, 7]
         self.game.shuffle_if_penetration_exceeded()
+
+        # Shoe should now be reshuffled
         self.assertNotEqual(len(self.game.shoe), 3)
-        self.assert_(len(self.game.shoe), 52)
+        self.assertEqual(len(self.game.shoe), 52)
 
     def test_set_splits_left(self):
         self.game.allowed_splits = None
@@ -429,7 +441,7 @@ class TestDefaultGame(unittest.TestCase):
 
     def test_play_shoes(self):
         self.game.play_shoes(5)
-        self.assert_(len(self.game.money_trail) > 10)
+        self.assertGreater(len(self.game.money_trail), 10)
         # TODO, what else to assert?
 
     def test_print_summary(self):
