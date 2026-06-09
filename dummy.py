@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import basic_strategy as bs
 from util import get_hard_soft, is_21

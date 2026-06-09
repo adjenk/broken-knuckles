@@ -1,4 +1,3 @@
-from __future__ import print_function
 import random
 
 from functools import partial
@@ -81,7 +80,8 @@ class Game(object):
             print("player=", self.player_hand)
 
     def deal_others_one(self):
-        [hand.append(self.get_card()) for hand in self.other_players]
+        for hand in self.other_players:
+            hand.append(self.get_card())
 
     def get_card(self, count=True):
         try:
